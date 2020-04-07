@@ -133,6 +133,9 @@ body {
     }
     .stopwatch, .moves_block {
         font-size: 24px;
+        @include media(767px) {
+            font-size: 18px;
+        }
     }
     &_bottom {
         display: flex;
@@ -140,6 +143,16 @@ body {
         align-items: center;
         width: 100%;
         padding-top: 20px;
+        @include media(767px) {
+            flex-wrap: wrap;
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
     }
 }
 

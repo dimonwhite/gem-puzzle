@@ -149,12 +149,31 @@ body {
   font-size: 24px;
 }
 
+@media (max-width: 767px) {
+  .setting .stopwatch, .setting .moves_block {
+    font-size: 18px;
+  }
+}
+
 .setting_bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
   padding-top: 20px;
+}
+
+@media (max-width: 767px) {
+  .setting_bottom {
+    flex-wrap: wrap;
+  }
+  .setting_bottom .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .setting_bottom .btn:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .popup_result_list {
