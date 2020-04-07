@@ -2,39 +2,82 @@ class GemPuzzle {
   init() {
     this.body = document.body;
 
+    this.saveStorage = JSON.parse(sessionStorage.getItem('saveGame'));
+
+    this.size = this.saveStorage ? this.saveStorage.size : 4;
+
     this.initPopup();
 
     this.generationBoard();
 
-    this.generationPuzzle();
+    if (this.saveStorage) {
+      this.generationSaveGame();
+    } else {
+      this.generationPuzzle();
+    }
+
+    if (!localStorage.getItem('result')) {
+      this.result = [];
+    } else {
+      this.result = JSON.parse(localStorage.getItem('result'));
+    }
   }
 
   generationBoard() {
     const container = document.createElement('div');
     container.classList.add('container');
 
-    let settingsBlock = document.createElement('div');
-    settingsBlock.classList.add('setting');
+    this.settingsBlock = document.createElement('div');
+    this.settingsBlock.classList.add('setting');
 
-    let sizeBoard = document.createElement('select');
+    const sizeBoardWrap = document.createElement('div');
+    sizeBoardWrap.classList.add('size_board');
+    const sizeBoard = document.createElement('select');
     for (let i = 3; i <= 8; i += 1) {
-      let sizeBoardOption = document.createElement('option');
+      const sizeBoardOption = document.createElement('option');
       sizeBoardOption.value = i;
       sizeBoardOption.innerText = `${i}x${i}`;
-      if (i === 4) {
+      if (i === this.size) {
         sizeBoardOption.selected = true;
       }
       sizeBoard.append(sizeBoardOption);
     }
+    sizeBoardWrap.append(document.createTextNode('Размер поля: '));
+    sizeBoardWrap.append(sizeBoard);
+    this.settingsBlock.append(sizeBoardWrap);
 
-    settingsBlock.append(sizeBoard);
+    this.generationStopwatch(this.settingsBlock);
 
-    let newGameBtn = document.createElement('button');
+    const movesBlock = document.createElement('div');
+    movesBlock.classList.add('moves_block');
+    this.movesText = document.createElement('span');
+    this.movesText.innerText = this.saveStorage ? this.saveStorage.moves : '0';
+    movesBlock.append(document.createTextNode('Количество ходов: '));
+    movesBlock.append(this.movesText);
+
+    this.settingsBlock.append(movesBlock);
+
+    const settingsBlockBottom = document.createElement('div');
+    settingsBlockBottom.classList.add('setting_bottom');
+
+    const newGameBtn = document.createElement('button');
     newGameBtn.classList.add('btn');
     newGameBtn.innerText = 'Размешать';
-    settingsBlock.append(newGameBtn);
+    settingsBlockBottom.append(newGameBtn);
 
-    container.append(settingsBlock);
+    const resultBtn = document.createElement('button');
+    resultBtn.classList.add('btn');
+    resultBtn.innerText = 'Результаты';
+    settingsBlockBottom.append(resultBtn);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.classList.add('btn');
+    saveBtn.innerText = 'Сохранить';
+    settingsBlockBottom.append(saveBtn);
+
+    this.settingsBlock.append(settingsBlockBottom);
+
+    container.append(this.settingsBlock);
 
     this.puzzleBlock = document.createElement('div');
     this.puzzleBlock.classList.add('puzzle_wrapper');
@@ -46,12 +89,31 @@ class GemPuzzle {
     });
 
     newGameBtn.addEventListener('click', () => {
-      this.generationPuzzle();
+      this.generationPuzzle(this.size);
+    });
+
+    resultBtn.addEventListener('click', () => {
+      this.getResult();
+    });
+
+    saveBtn.addEventListener('click', () => {
+      this.saveGame();
+    });
+
+    sizeBoard.addEventListener('change', (e) => {
+      this.size = +e.target.value;
+      this.generationPuzzle(this.size);
     });
   }
 
-  generationPuzzle(size = 2) {
+  generationPuzzle(size = 4) {
+    this.size = size;
+    this.saveStorage = '';
+    sessionStorage.removeItem('saveGame');
+    clearInterval(this.stopwatchCounter);
     this.clearBoard();
+
+    this.stopwatch();
 
     this.moves = 0;
 
@@ -62,13 +124,13 @@ class GemPuzzle {
     this.resultPuzzles = [];
     let numberText = 0;
 
-    for (let i = 0; i < size ** 2; i += 1) {
-      numberText = numberText < size ** 2 - 1 ? numberText + 1 : 0;
+    for (let i = 0; i < this.size ** 2; i += 1) {
+      numberText = numberText < this.size ** 2 - 1 ? numberText + 1 : 0;
       this.puzzles.push(numberText);
       this.resultPuzzles.push(numberText);
     }
 
-    this.arrangeItems(size);
+    this.arrangeItems(this.size);
   }
 
   clearBoard() {
@@ -92,7 +154,9 @@ class GemPuzzle {
 
     let column = 1;
 
-    this.arrayRandom();
+    if (!this.saveStorage) {
+      this.arrayRandom();
+    }
 
     this.puzzles.forEach((btn) => {
       if (column === size + 1) {
@@ -115,9 +179,6 @@ class GemPuzzle {
       puzzleLeft += this.puzzleWidth;
       column += 1;
     });
-
-    // console.log(this.puzzles);
-    // console.log(this.null);
   }
 
   clickPuzzle(e) {
@@ -133,7 +194,6 @@ class GemPuzzle {
       const btnLeft = btn.offsetLeft;
       const btnBottom = btnTop + this.puzzleWidth;
       const btnRight = btnLeft + this.puzzleWidth;
-
       if (
         (nullTop === btnBottom && nullRight === btnRight && nullLeft === btnLeft)
                 || (nullRight === btnLeft && nullTop === btnTop && nullBottom === btnBottom)
@@ -142,6 +202,7 @@ class GemPuzzle {
       ) {
         this.swap(btn, nullTop, nullLeft, btnTop, btnLeft);
         this.moves += 1;
+        this.changeMoves();
         this.check();
       }
     }
@@ -175,39 +236,177 @@ class GemPuzzle {
   }
 
   win() {
-    this.popupText.innerText = `Ура! Вы решили головоломку за ##:## и ${this.moves} ходов`;
-    this.openPopup();
+    this.result.push({
+      size: `${this.size}x${this.size}`,
+      time: this.stopwatchBlock.innerText,
+      moves: this.moves,
+    });
+
+    this.saveResult();
+
+    this.popupText.innerText = `Ура! Вы решили головоломку за ${this.stopwatchBlock.innerText} и ${this.moves} ходов`;
+    clearInterval(this.stopwatchCounter);
+    this.openPopup(this.popupWin);
   }
 
   initPopup() {
     this.popupText = document.createElement('div');
     this.popupText.classList.add('popup_text');
-    this.popupBtn = document.createElement('button');
-    this.popupBtn.classList.add('btn');
-    this.popupBtn.innerText = 'Начать заново';
+    const popupBtn = document.createElement('button');
+    popupBtn.classList.add('btn');
+    popupBtn.innerText = 'Начать заново';
     this.popup = document.createElement('div');
     this.popup.classList.add('popup');
-    this.popupBlock = document.createElement('div');
-    this.popupBlock.classList.add('popup_block');
+    this.popupWin = document.createElement('div');
+    this.popupWin.classList.add('popup_block');
 
-    this.popupBlock.append(this.popupText);
-    this.popupBlock.append(this.popupBtn);
-    this.popup.append(this.popupBlock);
+    this.popupWin.append(this.popupText);
+    this.popupWin.append(popupBtn);
+    this.popup.append(this.popupWin);
     this.body.append(this.popup);
 
-    this.popupBtn.addEventListener('click', () => {
-      this.closePopup();
+    popupBtn.addEventListener('click', () => {
+      this.closePopup(this.popupWin);
+      this.generationPuzzle(this.size);
+    });
+
+    this.popupResult = document.createElement('div');
+    this.popupResult.classList.add('popup_block', 'popup_result');
+    const popupBtnResult = document.createElement('button');
+    popupBtnResult.classList.add('btn');
+    popupBtnResult.innerText = 'Закрыть';
+    this.popupResultList = document.createElement('div');
+    this.popupResultList.classList.add('popup_result_list');
+
+    this.popupResult.append(this.popupResultList);
+    this.popupResult.append(popupBtnResult);
+
+    this.popup.append(this.popupResult);
+
+    popupBtnResult.addEventListener('click', () => {
+      this.closePopup(this.popupResult);
     });
   }
 
-  openPopup() {
+  openPopup(popupBlock) {
     this.popup.classList.add('active');
+    popupBlock.classList.add('active');
   }
 
-  closePopup() {
+  closePopup(popupBlock) {
     this.popup.classList.remove('active');
+    popupBlock.classList.remove('active');
+  }
 
-    this.generationPuzzle();
+  generationStopwatch(block) {
+    this.minuteText = document.createElement('span');
+    this.secondText = document.createElement('span');
+    this.stopwatchBlock = document.createElement('div');
+
+    this.stopwatchBlock.classList.add('stopwatch');
+    this.minuteText.classList.add('stopwatch_item');
+    this.secondText.classList.add('stopwatch_item');
+
+    this.stopwatchBlock.append(this.minuteText);
+    this.stopwatchBlock.append(document.createTextNode(':'));
+    this.stopwatchBlock.append(this.secondText);
+
+    block.append(this.stopwatchBlock);
+  }
+
+  stopwatch() {
+    let second = this.saveStorage ? this.saveStorage.second : '00';
+    let minute = this.saveStorage ? this.saveStorage.minute : '00';
+
+    this.secondText.innerText = second;
+    this.minuteText.innerText = minute;
+
+    this.stopwatchCounter = setInterval(() => {
+      second = +second + 1;
+      if (second < 10) {
+        second = `0${second}`;
+      }
+      if (second === 60) {
+        second = '00';
+        minute = +minute + 1;
+        if (minute < 10) {
+          minute = `0${minute}`;
+        }
+      }
+      this.secondText.innerText = second;
+      this.minuteText.innerText = minute;
+    }, 1000);
+  }
+
+  changeMoves() {
+    this.movesText.innerText = this.moves;
+  }
+
+  saveResult() {
+    this.result = this.result.sort((a, b) => a.moves - b.moves);
+
+    if (this.result.length > 10) {
+      this.result = this.result.slice(0, 10);
+    }
+
+    localStorage.setItem('result', JSON.stringify(this.result));
+  }
+
+  getResult() {
+    this.popupResultList.innerHTML = `
+      <div class="popup_result_list_item title">
+        <span>Размер</span>
+        <span>Время</span>
+        <span>Ходы</span>
+      </div>
+    `;
+    this.result.forEach((item) => {
+      this.popupResultList.innerHTML += `
+        <div class="popup_result_list_item">
+          <span>${item.size}</span>
+          <span>${item.time}</span>
+          <span>${item.moves}</span>
+        </div>
+      `;
+    });
+    this.openPopup(this.popupResult);
+  }
+
+  saveGame() {
+    this.saveStorage = {
+      size: this.size,
+      puzzles: this.puzzles,
+      moves: this.moves,
+      second: this.secondText.innerText,
+      minute: this.minuteText.innerText,
+    };
+
+    sessionStorage.setItem('saveGame', JSON.stringify(this.saveStorage));
+  }
+
+  generationSaveGame() {
+    clearInterval(this.stopwatchCounter);
+    this.clearBoard();
+
+    this.stopwatch();
+
+    this.moves = this.saveStorage.moves;
+
+    const puzzleBlockWidth = this.puzzleBlock.clientWidth;
+
+    const size = this.saveStorage.size;
+
+    this.puzzleWidth = Math.floor(puzzleBlockWidth / size);
+    this.puzzles = this.saveStorage.puzzles;
+    this.resultPuzzles = [];
+    let numberText = 0;
+
+    for (let i = 0; i < size ** 2; i += 1) {
+      numberText = numberText < size ** 2 - 1 ? numberText + 1 : 0;
+      this.resultPuzzles.push(numberText);
+    }
+
+    this.arrangeItems(size);
   }
 }
 

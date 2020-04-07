@@ -23,6 +23,18 @@ body {
   padding: 20px calc(50% - 400px);
 }
 
+@media (max-width: 820px) {
+  .container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 10px;
+  }
+}
+
 .puzzle {
   position: absolute;
   display: flex;
@@ -34,6 +46,14 @@ body {
   background-color: #fff;
   cursor: pointer;
   transition: all 0.3s;
+}
+
+@media (max-width: 767px) {
+  .puzzle {
+    font-size: 20px;
+    font-weight: 500;
+    border-width: 1px;
+  }
 }
 
 .puzzle.null {
@@ -72,12 +92,17 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
+  display: none;
   width: 400px;
   max-width: 95%;
   padding: 30px;
   background-color: #fff;
   border-radius: 5px;
   transform: translate(-50%, -50%);
+}
+
+.popup_block.active {
+  display: block;
 }
 
 .popup_text {
@@ -100,4 +125,60 @@ body {
 
 .btn:hover {
   background-color: #2d682f;
+}
+
+.setting {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.setting .size_board {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.setting select {
+  width: 200px;
+  height: 26px;
+}
+
+.setting .stopwatch, .setting .moves_block {
+  font-size: 24px;
+}
+
+.setting_bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-top: 20px;
+}
+
+.popup_result_list {
+  margin-bottom: 20px;
+}
+
+.popup_result_list_item {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.popup_result_list_item.title {
+  font-weight: 500;
+}
+
+.popup_result_list_item span {
+  width: calc(100% / 3);
+  text-align: center;
+}
+
+.popup_result_list_item span:first-child {
+  text-align: left;
+}
+
+.popup_result_list_item span:last-child {
+  text-align: right;
 }

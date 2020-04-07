@@ -1,3 +1,9 @@
+@mixin media($width) {
+    @media (max-width: $width) {
+        @content;
+    }
+}
+
 *,
 *:before,
 *:after {
@@ -21,6 +27,12 @@ body {
 
 .container {
     padding: 20px calc(50% - 400px);
+    @include media(820px) {
+        padding: 20px;
+    }
+    @include media(600px) {
+        padding: 10px;
+    }
 }
 
 .puzzle {
@@ -34,6 +46,11 @@ body {
     background-color: #fff;
     cursor: pointer;
     transition: all 0.3s;
+    @include media(767px) {
+        font-size: 20px;
+        font-weight: 500;
+        border-width: 1px;
+    }
     &.null {
         opacity: 0;
         cursor: default;
@@ -67,12 +84,16 @@ body {
         position: absolute;
         top: 50%;
         left: 50%;
+        display: none;
         width: 400px;
         max-width: 95%;
         padding: 30px;
         background-color: #fff;
         border-radius: 5px;
         transform: translate(-50%, -50%);
+        &.active {
+            display: block;
+        }
     }
     &_text {
         font-size: 20px;
@@ -93,5 +114,52 @@ body {
     transition: background-color 0.5s;
     &:hover {
         background-color: darken(#4caf50, 20);
+    }
+}
+
+.setting {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    .size_board {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    select {
+        width: 200px;
+        height: 26px;
+    }
+    .stopwatch, .moves_block {
+        font-size: 24px;
+    }
+    &_bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding-top: 20px;
+    }
+}
+
+.popup_result_list {
+    margin-bottom: 20px;
+    &_item {
+        display: flex;
+        margin-bottom: 10px;
+        &.title {
+            font-weight: 500;
+        }
+        span {
+            width: calc(100% / 3);
+            text-align: center;
+            &:first-child {
+                text-align: left;
+            }
+            &:last-child {
+                text-align: right;
+            }
+        }
     }
 }
