@@ -394,7 +394,7 @@ class GemPuzzle {
 
     const puzzleBlockWidth = this.puzzleBlock.clientWidth;
 
-    const size = this.saveStorage.size;
+    const { size } = this.saveStorage;
 
     this.puzzleWidth = Math.floor(puzzleBlockWidth / size);
     this.puzzles = this.saveStorage.puzzles;
