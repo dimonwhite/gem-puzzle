@@ -116,6 +116,7 @@ class GemPuzzle {
     this.stopwatch();
 
     this.moves = 0;
+    this.movesText.innerText = this.moves;
 
     const puzzleBlockWidth = this.puzzleBlock.clientWidth;
 
